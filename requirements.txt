@@ -1,0 +1,19 @@
+numpy
+pandas
+matplotlib
+opencv-python
+albumentations
+ipykernel
+tqdm
+pycocotools
+from-root
+boto3
+mypy-boto3-s3
+Pillow
+torch-summary
+fastapi
+uvicorn
+Jinja2
+python-multipart
+PyYAML
+-e .
