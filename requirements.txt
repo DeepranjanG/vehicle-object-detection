@@ -16,4 +16,5 @@ uvicorn
 Jinja2
 python-multipart
 PyYAML
+dill==0.3.5.1
 -e .

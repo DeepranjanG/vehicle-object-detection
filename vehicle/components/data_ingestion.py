@@ -35,55 +35,8 @@ class DataIngestion:
             with ZipFile(self.data_ingestion_config.ZIP_FILE_PATH, 'r') as zip_ref:
                 zip_ref.extractall(self.data_ingestion_config.ZIP_FILE_DIR)
             logging.info("Exited the unzip_and_clean method of Data ingestion class")
-        except Exception as e:
-            raise VehicleException(e, sys) from e
 
-    def train_test_split(self) -> Path:
-        """
-        This function would split the raw data into train and test folder
-        """
-        logging.info("Entered the train_test_split method of Data ingestion class")
-        try:
-            # 1. make train and test folder 
-            unzipped_images = self.data_ingestion_config.UNZIPPED_FILE_PATH
-
-            os.makedirs(self.data_ingestion_config.TRAIN_DATA_ARTIFACT_DIR, exist_ok=True)
-            os.makedirs(self.data_ingestion_config.TEST_DATA_ARTIFACT_DIR, exist_ok=True)
-            logging.info("Created train data artifacts and test data artifacts directories")
-            #params.yaml
-            test_ratio = self.data_ingestion_config.PARAMS_TEST_RATIO
-
-            #print(train_path)
-            classes_dir = [CLASS_LABEL_1, CLASS_LABEL_2]
-
-            for cls in classes_dir:
-                os.makedirs(os.path.join(self.data_ingestion_config.TRAIN_DATA_ARTIFACT_DIR, cls), exist_ok= True)
-                os.makedirs(os.path.join(self.data_ingestion_config.TEST_DATA_ARTIFACT_DIR, cls), exist_ok=True)
-                logging.info("Created train data artifacts and test data artifacts directories with class")
-            # 2. Split the raw data
-            raw_data_path = os.path.join(unzipped_images)
-
-            for cls in classes_dir:
-                all_file_names = os.listdir(os.path.join(raw_data_path, cls))
- 
-                np.random.shuffle(all_file_names)
-                train_file_name, test_file_name = np.split(np.array(all_file_names),
-                                    [int(len(all_file_names)* (1 - test_ratio))])
-
-                train_names = [os.path.join(raw_data_path, cls, name) for name in train_file_name.tolist()]
-                test_names = [os.path.join(raw_data_path, cls, name) for name in test_file_name.tolist()]
-
-                for name in train_names:
-                    shutil.copy(name, os.path.join(self.data_ingestion_config.TRAIN_DATA_ARTIFACT_DIR, cls))
-
-                for name in test_names:
-                    shutil.copy(name, os.path.join(self.data_ingestion_config.TEST_DATA_ARTIFACT_DIR, cls))   
-
-            shutil.rmtree(self.data_ingestion_config.UNZIPPED_FILE_PATH, ignore_errors=True)
-            logging.info("Exited the train_test_split method of Data ingestion class")
-
-            return self.data_ingestion_config.TRAIN_DATA_ARTIFACT_DIR, self.data_ingestion_config.TEST_DATA_ARTIFACT_DIR
-
+            return self.data_ingestion_config.TRAIN_DATA_ARTIFACT_DIR, self.data_ingestion_config.TEST_DATA_ARTIFACT_DIR, self.data_ingestion_config.VALID_DATA_ARTIFACT_DIR
         except Exception as e:
             raise VehicleException(e, sys) from e
 
@@ -91,14 +44,25 @@ class DataIngestion:
     def initiate_data_ingestion(self) -> DataIngestionArtifacts: 
         logging.info("Entered the initiate_data_ingestion method of Data ingestion class")
         try: 
+
+            
             self.get_data_from_s3()
-            self.unzip_and_clean()
-            # train_file_path, test_file_path = self.train_test_split()
-            # data_ingestion_artifact = DataIngestionArtifacts(train_file_path=train_file_path, 
-            #                                                     test_file_path=test_file_path)
+
+            logging.info("Fetched the data from S3 bucket")
+
+            train_file_path, test_file_path, valid_file_path= self.unzip_and_clean()
+
+            logging.info("Unzipped file and splited into train, test and valid")
+
+            data_ingestion_artifact = DataIngestionArtifacts(train_file_path=train_file_path, 
+                                                                test_file_path=test_file_path,
+                                                                valid_file_path=valid_file_path)
+
             logging.info("Exited the initiate_data_ingestion method of Data ingestion class")
 
-            # return data_ingestion_artifact
+            logging.info(f"Data ingestion artifact: {data_ingestion_artifact}")
+
+            return data_ingestion_artifact
 
         except Exception as e:
             raise VehicleException(e, sys) from e
