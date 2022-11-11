@@ -153,7 +153,7 @@ class VehicleDetection(datasets.VisionDataset):
 
 if __name__ == "__main__":
 
-    dataset_path = r"D:\Project\DL\torch-object-detection\Vehicles"
+    dataset_path = r"D:\Project\DL\torch-object-detection\artifacts\11_11_2022_18_11_28\DataIngestionArtifacts"
 
     #load classes
     coco = COCO(os.path.join(dataset_path, "train", "_annotations.coco.json"))
@@ -166,11 +166,11 @@ if __name__ == "__main__":
 
 
     # Lets view a sample
-    sample = train_dataset[2]
-    img_int = torch.tensor(sample[0] * 255, dtype=torch.uint8)
-    plt.imshow(draw_bounding_boxes(
-        img_int, sample[1]['boxes'], [classes[i] for i in sample[1]['labels']], width=4
-    ).permute(1, 2, 0))
+    # sample = train_dataset[2]
+    # img_int = torch.tensor(sample[0] * 255, dtype=torch.uint8)
+    # plt.imshow(draw_bounding_boxes(
+    #     img_int, sample[1]['boxes'], [classes[i] for i in sample[1]['labels']], width=4
+    # ).permute(1, 2, 0))
 
 
 
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.SGD(params, lr=0.01, momentum=0.9, nesterov=True, weight_decay=1e-4)
     # lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[16, 22], gamma=0.1) # lr scheduler
 
-    num_epochs=5
+    num_epochs=2
 
     for epoch in range(num_epochs):
         train_one_epoch(model, optimizer, train_loader, device, epoch)

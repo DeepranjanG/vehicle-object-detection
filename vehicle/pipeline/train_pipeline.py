@@ -1,17 +1,15 @@
-import torch
+import sys
 from vehicle.components.data_ingestion import DataIngestion
 from vehicle.components.data_transformation import DataTransformation
 from vehicle.components.model_trainer import ModelTrainer
-# from xray.components.model_evaluation import ModelEvaluation
-# from xray.components.model_pusher import ModelPusher
+from vehicle.components.model_evaluation import ModelEvaluation
+from vehicle.components.model_pusher import ModelPusher
 from vehicle.configuration.s3_operations import S3Operation
-# from xray.models.model import Net
 from vehicle.exception import VehicleException
-from vehicle.entity.config_entity import DataIngestionConfig, DataTransformationConfig, ModelTrainerConfig
+from vehicle.entity.config_entity import DataIngestionConfig, DataTransformationConfig, ModelTrainerConfig, ModelEvaluationConfig, ModelPusherConfig
 from vehicle.entity.artifacts_entity import DataIngestionArtifacts, DataTransformationArtifacts, ModelTrainerArtifacts, ModelEvaluationArtifacts, ModelPusherArtifacts
 from vehicle.logger import logging
-import logging
-import sys
+
 
 
 class TrainPipeline:
@@ -19,8 +17,8 @@ class TrainPipeline:
         self.data_ingestion_config = DataIngestionConfig()
         self.data_transformation_config = DataTransformationConfig()
         self.model_trainer_config = ModelTrainerConfig()
-        # self.model_evaluation_config = ModelEvaluationConfig()
-        # self.model_pusher_config = ModelPusherConfig()
+        self.model_evaluation_config = ModelEvaluationConfig()
+        self.model_pusher_config = ModelPusherConfig()
         self.s3_operations = S3Operation()
 
     def start_data_ingestion(self) -> DataIngestionArtifacts:
@@ -59,7 +57,6 @@ class TrainPipeline:
         except Exception as e:
             raise VehicleException(e, sys) from e
 
-
     def start_model_trainer(self, data_transformation_artifact: DataTransformationArtifacts) -> ModelTrainerArtifacts:
         logging.info(
             "Entered the start_model_trainer method of TrainPipeline class"
@@ -75,13 +72,13 @@ class TrainPipeline:
         except Exception as e:
             raise VehicleException(e, sys) 
 
-    def start_model_evaluation(self, model_trainer_artifact: ModelTrainerArtifacts, data_ingestion_artifact: DataIngestionArtifacts,
-                                    data_transformation_artifact: DataTransformationArtifacts) -> ModelEvaluationArtifacts:
+    def start_model_evaluation(self, model_trainer_artifact: ModelTrainerArtifacts, data_transformation_artifact: DataTransformationArtifacts) -> ModelEvaluationArtifacts:
         logging.info("Entered the start_model_evaluation method of TrainPipeline class")
         try:
-            use_cuda = torch.cuda.is_available()
-            model_evaluation = ModelEvaluation(data_ingestion_artifact= data_ingestion_artifact, data_transformation_artifact = data_transformation_artifact, 
-                                                model_evaluation_config=self.model_evaluation_config, model_trainer_artifact=model_trainer_artifact)
+            model_evaluation = ModelEvaluation(data_transformation_artifacts = data_transformation_artifact,
+                                                model_evaluation_config=self.model_evaluation_config,
+                                                model_trainer_artifacts=model_trainer_artifact)
+
             model_evaluation_artifact = model_evaluation.initiate_model_evaluation()
             logging.info("Exited the start_model_evaluation method of TrainPipeline class")
             return model_evaluation_artifact
@@ -90,13 +87,11 @@ class TrainPipeline:
             raise VehicleException(e, sys) from e
 
 
-    def start_model_pusher(self,
-        model_evaluation_artifacts: ModelEvaluationArtifacts,s3: S3Operation,) -> ModelPusherArtifacts:
+    def start_model_pusher(self,s3: S3Operation,) -> ModelPusherArtifacts:
         logging.info("Entered the start_model_pusher method of TrainPipeline class")
         try:
             model_pusher = ModelPusher(
                 model_pusher_config=self.model_pusher_config,
-                model_evaluation_artifacts=model_evaluation_artifacts,
                 s3=s3,
             )
             model_pusher_artifact = model_pusher.initiate_model_pusher()
@@ -118,11 +113,10 @@ class TrainPipeline:
             model_trainer_artifact = self.start_model_trainer(
                 data_transformation_artifact=data_transformation_artifact
             )
-            # model_evaluation_artifact = self.start_model_evaluation(model_trainer_artifact=model_trainer_artifact, data_ingestion_artifact=data_ingestion_artifact,
-            #                                                         data_transformation_artifact= data_transformation_artifact
-            # )
-            # model_pusher_artifact = self.start_model_pusher(model_evaluation_artifacts=model_evaluation_artifact,s3=self.s3_operations,
-            # )
+            model_evaluation_artifact = self.start_model_evaluation(model_trainer_artifact=model_trainer_artifact,
+                                                                    data_transformation_artifact=data_transformation_artifact
+            )
+            model_pusher_artifact = self.start_model_pusher(s3=self.s3_operations)
             logging.info("Exited the run_pipeline method of TrainPipeline class")
             
         except Exception as e:

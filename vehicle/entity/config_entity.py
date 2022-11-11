@@ -31,20 +31,20 @@ class DataTransformationConfig:
         self.TEST_TRANSFORM_DATA_ARTIFACT_DIR = os.path.join(self.DATA_TRANSFORMATION_ARTIFACTS_DIR,DATA_TRANSFORMATION_TEST_DIR)
         self.TRAIN_TRANSFORM_OBJECT_FILE_PATH = os.path.join(self.TRAIN_TRANSFORM_DATA_ARTIFACT_DIR,
                                                                 DATA_TRANSFORMATION_TRAIN_FILE_NAME)
-        self.BATCH_SIZE: int = DATA_TRANSFORMATION_BATCH_SIZE
-        self.SHUFFLE: bool = DATA_TRANSFORMATION_SHUFFLE
-        self.NUM_WORKERS = DATA_TRANSFORMATION_NUM_WORKERS
+        self.TEST_TRANSFORM_OBJECT_FILE_PATH = os.path.join(self.TEST_TRANSFORM_DATA_ARTIFACT_DIR,
+                                                                DATA_TRANSFORMATION_TEST_FILE_NAME)
+        
         self.TRAIN_SPLIT = DATA_TRANSFORMATION_TRAIN_SPLIT
         self.TEST_SPLIT = DATA_TRANSFORMATION_TEST_SPLIT
 
 @dataclass
 class ModelTrainerConfig:
      def __init__(self):
-        self.TRAINED_MODEL_DIR: str = os.path.join(from_root(),ARTIFACTS_DIR,TRAINED_MODEL_DIR)
-        self.TRAINED_MODEL_PATH = os.path.join(self.TRAINED_MODEL_DIR,TRAINED_MODEL_NAME)
-        self.PARAMS_EPOCHS: int = PARAMS_EPOCHS
-        self.STEP_SIZE: int = STEP_SIZE
-        self.GAMMA: int = GAMMA
+        self.TRAINED_MODEL_DIR: str = os.path.join(from_root(), ARTIFACTS_DIR, TRAINED_MODEL_DIR)
+        self.TRAINED_MODEL_PATH = os.path.join(self.TRAINED_MODEL_DIR, TRAINED_MODEL_NAME)
+        self.BATCH_SIZE: int = TRAINED_BATCH_SIZE
+        self.SHUFFLE: bool = TRAINED_SHUFFLE
+        self.NUM_WORKERS = TRAINED_NUM_WORKERS
         self.EPOCH: int = EPOCH
         self.DEVICE = DEVICE 
         

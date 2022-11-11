@@ -3,7 +3,7 @@ import sys
 from pycocotools.coco import COCO
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from torch.utils.data import DataLoader
+
 from vehicle.logger import logging
 from vehicle.exception import VehicleException
 from vehicle.ml.feature.vehicle_detection import VehicleDetection
@@ -54,16 +54,6 @@ class DataTransformation:
             raise VehicleException(e, sys) from e
 
     
-    def collate_fn(self,batch):
-        """
-        This is our collating function for the train dataloader, 
-        it allows us to create batches of data that can be easily pass into the model
-        """
-        try:
-            return tuple(zip(*batch))
-        except Exception as e:
-            raise VehicleException(e, sys) from e
-
 
     def initiate_data_transformation(self) -> DataTransformationArtifacts:
         try:
@@ -82,14 +72,16 @@ class DataTransformation:
 
             logging.info(f"Testing dataset prepared")
 
-            train_loader = DataLoader(train_dataset, batch_size=self.data_transformation_config.BATCH_SIZE, shuffle=self.data_transformation_config.SHUFFLE, num_workers=self.data_transformation_config.NUM_WORKERS, collate_fn=self.collate_fn)
+            # train_loader = DataLoader(train_dataset, batch_size=self.data_transformation_config.BATCH_SIZE, shuffle=self.data_transformation_config.SHUFFLE, num_workers=self.data_transformation_config.NUM_WORKERS, collate_fn=self.collate_fn)
 
-            save_object(self.data_transformation_config.TRAIN_TRANSFORM_OBJECT_FILE_PATH, train_loader)
+            save_object(self.data_transformation_config.TRAIN_TRANSFORM_OBJECT_FILE_PATH, train_dataset)
+            save_object(self.data_transformation_config.TEST_TRANSFORM_OBJECT_FILE_PATH, test_dataset)
 
             logging.info("Saved the train transformed object")
 
             data_transformation_artifact = DataTransformationArtifacts(
                 transformed_train_object=self.data_transformation_config.TRAIN_TRANSFORM_OBJECT_FILE_PATH,
+                transformed_test_object=self.data_transformation_config.TEST_TRANSFORM_OBJECT_FILE_PATH,
                 number_of_classes=n_classes)
 
             logging.info("Exited the initiate_data_transformation method of Data transformation class")
