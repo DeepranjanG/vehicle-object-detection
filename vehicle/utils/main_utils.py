@@ -2,6 +2,7 @@
 import os
 import sys
 import dill
+import base64
 from vehicle.logger import logging
 from vehicle.exception import VehicleException
 
@@ -34,3 +35,11 @@ def load_object(file_path: str) -> object:
 
     except Exception as e:
         raise VehicleException(e, sys) from e
+
+
+def image_to_base64(image):
+    with open(image, "rb") as img_file:
+        my_string = base64.b64encode(img_file.read())
+
+    return my_string
+

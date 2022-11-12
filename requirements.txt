@@ -5,7 +5,8 @@ opencv-python
 albumentations
 ipykernel
 tqdm
-pycocotools
+#pycocotools
+cython
 from-root
 boto3
 mypy-boto3-s3
@@ -17,4 +18,5 @@ Jinja2
 python-multipart
 PyYAML
 dill==0.3.5.1
+utils
 -e .

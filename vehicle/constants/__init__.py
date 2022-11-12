@@ -1,7 +1,5 @@
-# from vehicle.models.model import Net 
 import os
 import torch
-from torchsummary import summary
 from datetime import datetime
 
 TIMESTAMP: str = datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
@@ -21,13 +19,6 @@ VERTICAL_FLIP = 0.3
 RANDOM_BRIGHTNESS_CONTRAST = 0.1
 COLOR_JITTER = 0.1
 BBOX_FORMAT = 'coco'
-
-CLASS_LABEL_1 = 'vehicles'
-CLASS_LABEL_2 = 'Ambulance'
-CLASS_LABEL_3 = 'Bus'
-CLASS_LABEL_4 = 'Car'
-CLASS_LABEL_5 = 'Motorcycle'
-CLASS_LABEL_6 = 'Truck'
 
 RAW_FILE_NAME = 'vehicle'
 
@@ -52,17 +43,17 @@ TRAINED_MODEL_NAME = 'model.pt'
 TRAINED_BATCH_SIZE = 2
 TRAINED_SHUFFLE = False
 TRAINED_NUM_WORKERS = 4
-EPOCH = 1
+EPOCH = 50
 
 
 use_cuda = torch.cuda.is_available()
 DEVICE = torch.device("cuda" if use_cuda else "cpu")
 
 APP_HOST = "0.0.0.0"
-APP_PORT = 8001
+APP_PORT = 8080
 
 # Prediction Constants
-PREDICTION_LABEL = {"0" : CLASS_LABEL_1, "1" : CLASS_LABEL_2, "2" : CLASS_LABEL_3, "3" : CLASS_LABEL_4, "4" : CLASS_LABEL_5, "5" : CLASS_LABEL_6}
+PREDICTION_CLASSES = ['vehicles', 'Ambulance', 'Bus', 'Car', 'Motorcycle', 'Truck']
 
 # AWS CONSTANTS
 AWS_ACCESS_KEY_ID_ENV_KEY = "AWS_ACCESS_KEY_ID"

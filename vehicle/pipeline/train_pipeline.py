@@ -77,6 +77,7 @@ class TrainPipeline:
         try:
             model_evaluation = ModelEvaluation(data_transformation_artifacts = data_transformation_artifact,
                                                 model_evaluation_config=self.model_evaluation_config,
+                                               model_trainer_config=self.model_trainer_config,
                                                 model_trainer_artifacts=model_trainer_artifact)
 
             model_evaluation_artifact = model_evaluation.initiate_model_evaluation()

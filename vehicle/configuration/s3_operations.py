@@ -235,7 +235,7 @@ class S3Operation:
             raise VehicleException(e, sys) from e
 
     
-    def read_data_from_s3(self, filename: str, bucket_name: str, output_filename: str) -> None:
+    def read_data_from_s3(self, filename: str, bucket_name: str, output_filename: str):
         try:
             bucket = self.get_bucket(bucket_name)
             
