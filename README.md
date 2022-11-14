@@ -17,9 +17,9 @@
 The goal of this project is to build a pipeline to detect vehicles.
 
 ## Solution Proposed
-The solution proposed for the above problem is that we have used Computer vision to solve the above problem to detect the vehicle. 
-We have used the Pytorch framework to solve the above problem also we have have created our custom object detection network with the help of pytorch. 
-Then we have created a API which takes in the images and predicts whether the number of vehicle. Then we have dockerized the application and deployed the model on AWS cloud.
+The solution proposed for the above problem is that we have used Computer vision to solve the above problem to detect the vehicle.
+We have used the Pytorch framework to solve the above problem also we created our custom object detection network with the help of PyTorch.
+Then we created an API that takes in the images and predicts the number of vehicles. Then we dockerized the application and deployed the model on the AWS cloud.
 
 ## Dataset Used
 
