@@ -8,7 +8,7 @@ from vehicle.logger import logging
 from vehicle.exception import VehicleException
 from vehicle.ml.feature.vehicle_detection import VehicleDetection
 from vehicle.constants import *
-from vehicle.utils.main_utils import save_object, load_object
+from vehicle.utils.main_utils import save_object
 from vehicle.entity.config_entity import DataTransformationConfig
 from vehicle.entity.artifacts_entity import DataIngestionArtifacts, DataTransformationArtifacts
 
@@ -53,9 +53,8 @@ class DataTransformation:
         except Exception as e:
             raise VehicleException(e, sys) from e
 
-    
-
     def initiate_data_transformation(self) -> DataTransformationArtifacts:
+
         try:
             logging.info("Entered the initiate_data_transformation method of Data transformation class")
 
@@ -71,8 +70,6 @@ class DataTransformation:
             test_dataset = VehicleDetection(root=self.data_transformation_config.ROOT_DIR, split=self.data_transformation_config.TEST_SPLIT, transforms=self.get_transforms(False))
 
             logging.info(f"Testing dataset prepared")
-
-            # train_loader = DataLoader(train_dataset, batch_size=self.data_transformation_config.BATCH_SIZE, shuffle=self.data_transformation_config.SHUFFLE, num_workers=self.data_transformation_config.NUM_WORKERS, collate_fn=self.collate_fn)
 
             save_object(self.data_transformation_config.TRAIN_TRANSFORM_OBJECT_FILE_PATH, train_dataset)
             save_object(self.data_transformation_config.TEST_TRANSFORM_OBJECT_FILE_PATH, test_dataset)

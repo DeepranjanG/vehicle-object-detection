@@ -6,9 +6,6 @@ TIMESTAMP: str = datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
 
 # Data Ingestion Constants
 ARTIFACTS_DIR = os.path.join("artifacts", TIMESTAMP)
-LOGS_DIR = 'logs'
-LOGS_FILE_NAME = 'vehicle.log'
-
 BUCKET_NAME = 'vehicle-object-detection'
 ZIP_FILE_NAME = 'Vehicle-dataset.zip'  
 ANNOTATIONS_COCO_JSON_FILE = '_annotations.coco.json'
@@ -43,12 +40,12 @@ TRAINED_MODEL_NAME = 'model.pt'
 TRAINED_BATCH_SIZE = 2
 TRAINED_SHUFFLE = False
 TRAINED_NUM_WORKERS = 4
-EPOCH = 50
+EPOCH = 1
 
 
+# Common constants
 use_cuda = torch.cuda.is_available()
 DEVICE = torch.device("cuda" if use_cuda else "cpu")
-
 APP_HOST = "0.0.0.0"
 APP_PORT = 8080
 

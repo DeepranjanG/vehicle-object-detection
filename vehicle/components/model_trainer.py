@@ -14,6 +14,7 @@ from vehicle.ml.models.model_optimiser import model_optimiser
 from vehicle.entity.config_entity import ModelTrainerConfig
 from vehicle.entity.artifacts_entity import DataTransformationArtifacts, ModelTrainerArtifacts
 
+
 class ModelTrainer:
     def __init__(self, data_transformation_artifacts: DataTransformationArtifacts,
                     model_trainer_config: ModelTrainerConfig):
