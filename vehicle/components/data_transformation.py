@@ -3,7 +3,6 @@ import sys
 from pycocotools.coco import COCO
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-
 from vehicle.logger import logging
 from vehicle.exception import VehicleException
 from vehicle.ml.feature.vehicle_detection import VehicleDetection
@@ -11,7 +10,6 @@ from vehicle.constants import *
 from vehicle.utils.main_utils import save_object
 from vehicle.entity.config_entity import DataTransformationConfig
 from vehicle.entity.artifacts_entity import DataIngestionArtifacts, DataTransformationArtifacts
-
 
 
 class DataTransformation:

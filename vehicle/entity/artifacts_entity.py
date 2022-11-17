@@ -22,7 +22,8 @@ class ModelTrainerArtifacts:
 # Model evaluation artifacts
 @dataclass
 class ModelEvaluationArtifacts:
-    model_accuracy: int 
+    is_model_accepted: bool
+    all_losses: str
 
 # Model Pusher Artifacts
 @dataclass

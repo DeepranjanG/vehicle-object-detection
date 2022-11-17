@@ -1,31 +1,32 @@
 
-
+import os
 import sys
 import torch
 import math
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-# from vehicle.ml.detection.engine import evaluate
-from vehicle.constants import DEVICE
+from vehicle.constants import *
 from vehicle.logger import logging
 from vehicle.exception import VehicleException
 from vehicle.utils.main_utils import load_object
-from vehicle.entity.config_entity import ModelEvaluationConfig, ModelTrainerConfig
+from vehicle.entity.config_entity import ModelEvaluationConfig
+from helmet.configuration.s3_operations import S3Operation
 from vehicle.entity.artifacts_entity import ModelTrainerArtifacts, DataTransformationArtifacts, ModelEvaluationArtifacts
 
 
 class ModelEvaluation:
 
-    def __init__(self, model_evaluation_config=ModelEvaluationConfig,
-                 model_trainer_config= ModelTrainerConfig,
-                data_transformation_artifacts=DataTransformationArtifacts,
-                model_trainer_artifacts=ModelTrainerArtifacts):
+    def __init__(self, model_evaluation_config:ModelEvaluationConfig,
+                data_transformation_artifacts:DataTransformationArtifacts,
+                model_trainer_artifacts:ModelTrainerArtifacts):
 
         self.model_evaluation_config = model_evaluation_config
-        self.model_trainer_config = model_trainer_config
         self.data_transformation_artifacts = data_transformation_artifacts
         self.model_trainer_artifacts = model_trainer_artifacts
+        self.s3 = S3Operation()
+        self.bucket_name = BUCKET_NAME
 
     @staticmethod
     def collate_fn(batch):
@@ -38,61 +39,60 @@ class ModelEvaluation:
         except Exception as e:
             raise VehicleException(e, sys) from e
 
+    def get_model_from_s3(self) -> str:
+        """
+        Method Name :   predict
+        Description :   This method predicts the image.
+
+        Output      :   Predictions
+        """
+        logging.info("Entered the get_model_from_s3 method of PredictionPipeline class")
+        try:
+            # Loading the best model from s3 bucket
+            predict_model_path = self.model_evaluation_config.BEST_MODEL_PATH
+            best_model_path = self.s3.read_data_from_s3(TRAINED_MODEL_NAME, self.bucket_name, predict_model_path)
+            logging.info("Exited the get_model_from_s3 method of PredictionPipeline class")
+            return best_model_path
+
+        except Exception as e:
+            raise VehicleException(e, sys) from e
+
     def evaluate(self, model, dataloader, device):
         try:
-
-            model.eval()
-
-            running_loss = 0.0
-            loss_value = 0.0
-            losses = 0.0
-
+            model.to(device)
             all_losses = []
             all_losses_dict = []
 
             for images, targets in tqdm(dataloader):
-                images = list(img.to(device) for img in images)
+                images = list(image.to(device) for image in images)
                 targets = [{k: torch.tensor(v).to(device) for k, v in t.items()} for t in targets]
 
-                with torch.no_grad():
-                    loss_dict = model(images, targets)
+                loss_dict = model(images, targets)  # the model computes the loss automatically if we pass in targets
+                losses = sum(loss for loss in loss_dict.values())
+                loss_dict_append = {k: v.item() for k, v in loss_dict.items()}
+                loss_value = losses.item()
 
-                    # this returned object from the model:
-                    # len is 4 (so index here), which is probably because of the size of the batch
-                    # loss_dict[index]['boxes']
-                    # loss_dict[index]['labels']
-                    # loss_dict[index]['scores']
-                #     for x in range(1):
-                #         loss_value += sum(loss for loss in loss_dict[x]['scores'])
-                #
-                # running_loss += loss_value
+                all_losses.append(loss_value)
+                all_losses_dict.append(loss_dict_append)
 
+                if not math.isfinite(loss_value):
+                    print(f"Loss is {loss_value}, stopping training")  # train if loss becomes infinity
                     print(loss_dict)
+                    sys.exit(1)
 
-                    losses += sum(loss for loss in loss_dict.values())
-                    loss_dict_append = {k: v.item() for k, v in loss_dict.items()}
-                    loss_value = losses.item()
+                losses.backward()
 
-                    all_losses.append(loss_value)
-                    all_losses_dict.append(loss_dict_append)
+            all_losses_dict = pd.DataFrame(all_losses_dict)  # for printing
 
-                    if not math.isfinite(loss_value):
-                        print(f"Loss is {loss_value}, stopping training")  # train if loss becomes infinity
-                        print(loss_dict)
-                        sys.exit(1)
-
-                    losses.backward()
-                all_losses_dict = pd.DataFrame(all_losses_dict)  # for printing
-
-                print(
-                    "loss_classifier: {:.6f}, loss_box: {:.6f}, loss_rpn_box: {:.6f}, loss_object: {:.6f}".format(
-                        all_losses_dict['loss_classifier'].mean(),
-                        all_losses_dict['loss_box_reg'].mean(),
-                        all_losses_dict['loss_rpn_box_reg'].mean(),
-                        all_losses_dict['loss_objectness'].mean()
-                    ))
-
-            return all_losses_dict
+            print(
+                "loss: {:.6f},loss_classifier: {:.6f}, loss_box: {:.6f}, loss_rpn_box: {:.6f}, loss_object: {:.6f}".format(
+                    np.mean(all_losses),
+                    all_losses_dict['loss_classifier'].mean(),
+                    all_losses_dict['loss_box_reg'].mean(),
+                    all_losses_dict['loss_rpn_box_reg'].mean(),
+                    all_losses_dict['loss_objectness'].mean()
+                ))
+            return all_losses_dict, np.mean(all_losses)
         except Exception as e:
             raise VehicleException(e, sys) from e
 
@@ -107,25 +107,47 @@ class ModelEvaluation:
         """
 
         try:
-            # model = torch.load(self.model_trainer_artifacts.trained_model_path)
-            model = torch.load(r"D:\Project\DL\torch-object-detection\artifacts\PredictModel\model.pt")
+            trained_model = torch.load(self.model_trainer_artifacts.trained_model_path)
 
             test_dataset = load_object(self.data_transformation_artifacts.transformed_test_object)
 
             test_loader = DataLoader(test_dataset,
-                                      batch_size=self.model_trainer_config.BATCH_SIZE,
-                                      shuffle=self.model_trainer_config.SHUFFLE,
-                                      num_workers=self.model_trainer_config.NUM_WORKERS,
-                                      collate_fn=self.collate_fn
-                                      )
+                                     batch_size=self.model_evaluation_config.BATCH,
+                                     shuffle=self.model_evaluation_config.SHUFFLE,
+                                     num_workers=self.model_evaluation_config.NUM_WORKERS,
+                                     collate_fn=self.collate_fn
+                                     )
 
             logging.info("loaded saved model")
 
-            model = model.to(DEVICE)
+            trained_model = trained_model.to(DEVICE)
 
-            loss = self.evaluate(model, test_loader, device=DEVICE)
+            all_losses_dict, all_losses = self.evaluate(trained_model, test_loader, device=DEVICE)
+            os.makedirs(self.model_evaluation_config.EVALUATED_MODEL_DIR, exist_ok=True)
+            all_losses_dict.to_csv(self.model_evaluation_config.EVALUATED_LOSS_CSV_PATH, index=False)
 
-            print(loss)
+            s3_model = self.get_model_from_s3()
+            s3_model = torch.load(s3_model, map_location=torch.device(DEVICE))
+
+            s3_all_losses_dict, s3_all_losses = self.evaluate(s3_model, test_loader, device=DEVICE)
+
+            if s3_all_losses > all_losses:
+                # 0.03 > 0.02
+                is_model_accepted = True
+
+                model_evaluation_artifact = ModelEvaluationArtifacts(
+                    is_model_accepted=is_model_accepted,
+                    all_losses=all_losses)
+
+            else:
+                is_model_accepted = False
+
+                model_evaluation_artifact = ModelEvaluationArtifacts(
+                    is_model_accepted=is_model_accepted,
+                    all_losses=s3_all_losses)
+
+            logging.info("Exited the initiate_model_evaluation method of Model Evaluation class")
+            return model_evaluation_artifact
 
         except Exception as e:
             raise VehicleException(e, sys) from e
